@@ -2,12 +2,12 @@
 
 int numCajas = 3;
 int numClientes = 20;
-double tasaLlegada = 1.0 / 5.0;
+double tasaLlegada = 1.0 / 2.5;
 double tiempoAtencion = 4.0;
 
 List<double> tiemposEspera = Simular(numCajas, numClientes, tasaLlegada, tiempoAtencion);
 
-Console.WriteLine("Realizando prueba KS...");
+Console.WriteLine("\nRealizando prueba KS...");
 double pValor = PruebaKS(tiemposEspera, tasaLlegada);
 Console.WriteLine($"P-Valor: {pValor}");
 
@@ -22,8 +22,7 @@ else
 
 List<double> Simular(int numCajas, int numClientes, double tasaLlegada, double tiempoAtencion)
 {
-    Queue<double>[] filas = new Queue<double>[numCajas];
-    for (int i = 0; i < numCajas; i++) filas[i] = new Queue<double>();
+    double[] tiempoDisponible = new double[numCajas];
 
     List<double> tiemposEspera = new List<double>();
     double tiempoActual = 0;
@@ -31,35 +30,50 @@ List<double> Simular(int numCajas, int numClientes, double tasaLlegada, double t
     for (int i = 0; i < numClientes; i++)
     {
         double llegada = tiempoActual + (-Math.Log(1 - random.NextDouble()) / tasaLlegada);
-        int cajaSeleccionada = SeleccionarCaja(filas);
-        double inicioAtencion = Math.Max(llegada, filas[cajaSeleccionada].Count > 0 ? filas[cajaSeleccionada].Peek() : 0);
+
+        int cajaSeleccionada = SeleccionarCaja(tiempoDisponible);
+
+        double inicioAtencion = Math.Max(llegada, tiempoDisponible[cajaSeleccionada]);
         double finAtencion = inicioAtencion + tiempoAtencion;
-        tiemposEspera.Add(inicioAtencion - llegada);
-        filas[cajaSeleccionada].Enqueue(finAtencion);
+        double tiempoEspera = inicioAtencion - llegada;
+
+        tiemposEspera.Add(tiempoEspera);
+        tiempoDisponible[cajaSeleccionada] = finAtencion;
+
+        if (i == 0)
+        {
+            Console.WriteLine("\n╔══════════╦═══════════════╦══════════╦═════════════════╦════════════════╦═══════════════╗");
+            Console.WriteLine("║ Cliente  ║  Llega (seg)  ║  Caja    ║  Inicio  (seg)  ║  Fin     (seg) ║  Espera (seg) ║");
+            Console.WriteLine("╠══════════╬═══════════════╬══════════╬═════════════════╬════════════════╬═══════════════╣");
+        }
+
+        Console.WriteLine($"║ {i + 1,-8} ║ {llegada,-8:F2}      ║ {cajaSeleccionada + 1,-8} ║ {inicioAtencion,-8:F2}        ║ {finAtencion,-12:F2}   ║ {tiempoEspera,-8:F2}      ║");
+
+        if (i == numClientes - 1)
+        {
+            Console.WriteLine("╚══════════╩═══════════════╩══════════╩═════════════════╩════════════════╩═══════════════╝");
+        }
+
         tiempoActual = llegada;
-
-        Console.WriteLine($"Cliente {i + 1}: Llega en t={llegada:F2}, Caja {cajaSeleccionada + 1}, " +
-                  $"Inicio Atención={inicioAtencion:F2}, Fin Atención={finAtencion:F2}, " +
-                  $"Tiempo de espera={inicioAtencion - llegada:F2}");
-
     }
 
     return tiemposEspera;
 }
 
-int SeleccionarCaja(Queue<double>[] filas)
+int SeleccionarCaja(double[] tiempoDisponible)
 {
     int mejorCaja = 0;
-    double menorTiempo = double.MaxValue;
-    for (int i = 0; i < filas.Length; i++)
+    double menorTiempo = tiempoDisponible[0];
+
+    for (int i = 1; i < tiempoDisponible.Length; i++)
     {
-        double tiempoLibre = filas[i].Count > 0 ? filas[i].Peek() : 0;
-        if (tiempoLibre < menorTiempo)
+        if (tiempoDisponible[i] < menorTiempo)
         {
-            menorTiempo = tiempoLibre;
+            menorTiempo = tiempoDisponible[i];
             mejorCaja = i;
         }
     }
+
     return mejorCaja;
 }
 
