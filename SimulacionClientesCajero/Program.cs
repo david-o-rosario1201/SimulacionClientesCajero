@@ -3,11 +3,10 @@
 Random random = new Random();
 
 int numCajas = 3;
-int numClientes = 20;
+int numClientes = 40;
 double tasaLlegada = 1.0 / 2.5;
-double tiempoAtencion = 4.0;
 
-List<double> tiemposEspera = await Simular(numCajas, numClientes, tasaLlegada, tiempoAtencion);
+List<double> tiemposEspera = await Simular(numCajas, numClientes, tasaLlegada);
 
 Console.WriteLine("\nRealizando prueba KS...");
 double pValor = PruebaKS(tiemposEspera, tasaLlegada);
@@ -22,7 +21,7 @@ else
     Console.WriteLine("No hay evidencia suficiente para rechazar la hipótesis de que los datos siguen la distribución esperada.");
 }
 
-async Task<List<double>> Simular(int numCajas, int numClientes, double tasaLlegada, double tiempoAtencion)
+async Task<List<double>> Simular(int numCajas, int numClientes, double tasaLlegada)
 {
     double[] tiempoDisponible = new double[numCajas];
 
@@ -32,6 +31,7 @@ async Task<List<double>> Simular(int numCajas, int numClientes, double tasaLlega
     for (int i = 0; i < numClientes; i++)
     {
         double llegada = tiempoActual + (-Math.Log(1 - random.NextDouble()) / tasaLlegada);
+        double tiempoAtencion = random.Next(2, 9);
 
         int cajaSeleccionada = SeleccionarCaja(tiempoDisponible);
 
@@ -58,7 +58,7 @@ async Task<List<double>> Simular(int numCajas, int numClientes, double tasaLlega
 
         tiempoActual = llegada;
 
-        await Task.Delay(TimeSpan.FromSeconds(tiempoAtencion));
+        await Task.Delay(TimeSpan.FromSeconds(tiempoAtencion + tiempoEspera)); 
     }
 
     return tiemposEspera;
